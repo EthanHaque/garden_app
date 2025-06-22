@@ -44,6 +44,7 @@ export function DashboardPage() {
     const [selectedJob, setSelectedJob] = useState<IJob | null>(null);
     const [isLoadingDetails, setIsLoadingDetails] = useState(false);
     const [sorting, setSorting] = useState<SortingState>([]);
+    const [submitError, setSubmitError] = useState<string | null>(null);
 
     // --- API Calls & Real-time updates ---
     useEffect(() => {
@@ -60,9 +61,8 @@ export function DashboardPage() {
             socket.emit("join", user._id);
         });
 
-        socket.on("job:update", (data) => {
+        socket.on(`job:update`, (data) => {
             setJobs((prevJobs) => prevJobs.map((job) => (job._id === data.jobId ? { ...job, ...data } : job)));
-
             if (selectedJob && selectedJob._id === data.jobId) {
                 setSelectedJob((prev) => (prev ? { ...prev, ...data } : null));
             }
@@ -73,18 +73,29 @@ export function DashboardPage() {
         };
     }, [user, selectedJob]);
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        api.fetch("/api/jobs", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url }),
-        })
-            .then((res) => res.json())
-            .then((newJob) => {
-                setJobs((prevJobs) => [newJob, ...prevJobs]);
-                setUrl("");
+        setSubmitError(null);
+        try {
+            const res = await api.fetch("/api/jobs", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url }),
             });
+            const responseData = await res.json();
+
+            if (!res.ok) {
+                if (res.status === 422 && responseData.errors && responseData.errors.url) {
+                    throw new Error(responseData.errors.url);
+                }
+                throw new Error(responseData.message || "Failed to start job");
+            }
+
+            setJobs((prevJobs) => [responseData, ...prevJobs]);
+            setUrl("");
+        } catch (error: any) {
+            setSubmitError(error.message);
+        }
     };
 
     const handleRowClick = (job: IJob) => {
@@ -161,14 +172,18 @@ export function DashboardPage() {
                     <h1 className="text-2xl font-bold">Crawler Dashboard</h1>
                     <p className="text-muted-foreground">Monitor and inspect your scraping jobs.</p>
                 </div>
-                <form onSubmit={handleSubmit} className="flex items-center gap-2">
-                    <Input
-                        value={url}
-                        onChange={(e) => setUrl(e.target.value)}
-                        placeholder="Enter URL to process"
-                        className="w-80"
-                    />
-                    <Button type="submit">Start Job</Button>
+                <form onSubmit={handleSubmit} className="flex flex-col items-end gap-2">
+                    <div className="flex items-center gap-2">
+                        <Input
+                            value={url}
+                            onChange={(e) => setUrl(e.target.value)}
+                            placeholder="Enter URL to process"
+                            className="w-80"
+                            aria-invalid={!!submitError}
+                        />
+                        <Button type="submit">Start Job</Button>
+                    </div>
+                    {submitError && <p className="text-red-500 text-xs">{submitError}</p>}
                 </form>
             </header>
 

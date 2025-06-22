@@ -12,6 +12,10 @@ const loginSchema = z.object({
     password: z.string().min(1, "Password is required"),
 });
 
+const jobCreationSchema = z.object({
+    url: z.string().url({ message: "A valid URL is required." }),
+});
+
 /**
  * Middleware factory to validate request body against a Zod schema.
  * @param schema The Zod schema to validate against.
@@ -40,3 +44,4 @@ const validate = (schema: z.ZodObject<any, any>) => (req: Request, res: Response
 
 export const validateSignup = validate(signupSchema);
 export const validateLogin = validate(loginSchema);
+export const validateJobCreation = validate(jobCreationSchema);

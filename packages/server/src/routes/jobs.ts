@@ -2,14 +2,12 @@ import { Router } from "express";
 import { protect } from "../middleware/auth";
 import { Job } from "../models/job";
 import { crawlerQueue } from "../../../crawler/src/queue";
+import { validateJobCreation } from "../middleware/validators";
 
 export const jobRouter: Router = Router();
 
-jobRouter.post("/", protect, async (req, res) => {
+jobRouter.post("/", protect, validateJobCreation, async (req, res) => {
     const { url } = req.body;
-    if (!url) {
-        return res.status(400).json({ message: "URL is required" });
-    }
 
     const job = new Job({ url, user: req.user._id });
     await job.save();
