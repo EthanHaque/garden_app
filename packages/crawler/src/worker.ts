@@ -84,11 +84,11 @@ async function processPdf(page, job) {
 
     // Re-purpose the page for PDF rendering with pdf.js
     await page.setContent(`
-        <html><body></body><script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script></html>
+        <html><body></body><script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.3.31/pdf.min.js"></script></html>
     `);
     await page.evaluate(() => {
         (window as any).pdfjsLib.GlobalWorkerOptions.workerSrc =
-            `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
+            `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.3.31/pdf.worker.min.js`;
     });
 
     const pageImages = await page.evaluate(async (pdfUrl) => {
@@ -107,7 +107,7 @@ async function processPdf(page, job) {
         return pages;
     }, job.data.url);
 
-    const UPLOAD_DIR = path.resolve(__dirname, "../../../server/public/uploads");
+    const UPLOAD_DIR = path.resolve(__dirname, "../../server/public/uploads");
     const jobUploadDir = path.join(UPLOAD_DIR, job.data.jobId);
     await fs.mkdir(jobUploadDir, { recursive: true });
 
