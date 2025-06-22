@@ -134,7 +134,7 @@ export function JobsTable({ jobs, onRowClick, selectedJobId }: JobsTableProps) {
                                             {status}
                                         </Badge>
                                     </TooltipTrigger>
-                                    <TooltipContent variant="destructive">
+                                    <TooltipContent>
                                         <p className="max-w-sm">{job.error || "An unknown error occurred."}</p>
                                     </TooltipContent>
                                 </Tooltip>

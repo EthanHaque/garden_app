@@ -25,6 +25,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         tokenRef.current = accessToken;
     }, [accessToken]);
 
+    const apiBaseUrl = import.meta.env.PROD ? "" : import.meta.env.VITE_API_BASE_URL;
+
     const handleAuthResponse = (data: { accessToken: string; user: User }) => {
         setAccessToken(data.accessToken);
         setUser(data.user);
@@ -33,7 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const refreshToken = async (): Promise<string | null> => {
         try {
-            const res = await fetch("/api/auth/refresh", { method: "POST" });
+            const res = await fetch(`${apiBaseUrl}/api/auth/refresh`, { method: "POST" });
             if (!res.ok) {
                 setUser(null);
                 setAccessToken(null);
@@ -49,7 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const api = useMemo(() => new ApiClient(() => tokenRef.current, refreshToken), []);
+    const api = useMemo(() => new ApiClient(apiBaseUrl, () => tokenRef.current, refreshToken), [apiBaseUrl]);
 
     useEffect(() => {
         const checkUser = async () => {
@@ -77,7 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const formData = new FormData(e.currentTarget);
         const data = Object.fromEntries(formData.entries());
         try {
-            const res = await fetch("/api/auth/login", {
+            const res = await fetch(`${apiBaseUrl}/api/auth/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data),
@@ -99,7 +101,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const formData = new FormData(e.currentTarget);
         const data = Object.fromEntries(formData.entries());
         try {
-            const res = await fetch("/api/auth/signup", {
+            const res = await fetch(`${apiBaseUrl}/api/auth/signup`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data),
@@ -120,7 +122,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(null);
         setAccessToken(null);
         try {
-            await fetch("/api/auth/logout", { method: "POST" });
+            await fetch(`${apiBaseUrl}/api/auth/logout`, { method: "POST" });
         } catch (error) {
             console.error("Logout failed on server", error);
         } finally {

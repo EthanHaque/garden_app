@@ -2,12 +2,14 @@ type GetTokenFunction = () => string | null;
 type RefreshTokenFunction = () => Promise<string | null>;
 
 class ApiClient {
+    private baseUrl: string;
     private getToken: GetTokenFunction;
     private refreshToken: RefreshTokenFunction;
     private isRefreshing = false;
     private failedQueue: Array<{ resolve: (value: unknown) => void; reject: (reason?: any) => void }> = [];
 
-    constructor(getToken: GetTokenFunction, refreshToken: RefreshTokenFunction) {
+    constructor(baseUrl: string, getToken: GetTokenFunction, refreshToken: RefreshTokenFunction) {
+        this.baseUrl = baseUrl;
         this.getToken = getToken;
         this.refreshToken = refreshToken;
     }
@@ -25,6 +27,7 @@ class ApiClient {
 
     public async fetch(url: string, options: RequestInit = {}): Promise<Response> {
         let token = this.getToken();
+        const fullUrl = `${this.baseUrl}${url}`;
 
         const headers = new Headers(options.headers);
         if (token) {
@@ -32,7 +35,7 @@ class ApiClient {
         }
         options.headers = headers;
 
-        let response = await fetch(url, options);
+        let response = await fetch(fullUrl, options);
 
         // If the token expired (401), try to refresh it
         if (response.status === 401) {
@@ -46,7 +49,7 @@ class ApiClient {
                     headers.set("Authorization", `Bearer ${newToken}`);
                     options.headers = headers;
                     // Retry the original request with the new token
-                    response = await fetch(url, options);
+                    response = await fetch(fullUrl, options);
                 } catch (error) {
                     this.processQueue(error, null);
                     return Promise.reject(error);

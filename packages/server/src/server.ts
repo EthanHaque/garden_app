@@ -9,14 +9,18 @@ import cookieParser from "cookie-parser";
 import { loggerMiddleware } from "./config/logger";
 import { initializeQueueEvents } from "./services/queue";
 import logger from "./config/logger";
+import config from "./config";
+import path from "path";
+import { fileURLToPath } from "url";
 
 export const createServer = () => {
     const app = express();
     const httpServer = createHttpServer(app);
 
+    // Environment-aware CORS for Socket.IO
     const io = new Server(httpServer, {
         cors: {
-            origin: "http://localhost:5173",
+            origin: config.nodeEnv === "production" ? "*" : "http://localhost:5173",
             methods: ["GET", "POST"],
         },
     });
@@ -29,9 +33,22 @@ export const createServer = () => {
     app.use(cors());
     app.use(express.json());
     app.use(cookieParser());
+
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+
     app.use(loggerMiddleware);
 
     app.use("/api", apiRouter);
+
+    // In production, serve the built client and a catch-all for client-side routing
+    if (config.nodeEnv === "production") {
+        const clientBuildPath = path.join(__dirname, "../../client/dist");
+        app.use(express.static(clientBuildPath));
+        app.get("*", (req, res) => {
+            res.sendFile(path.join(clientBuildPath, "index.html"));
+        });
+    }
 
     io.on("connection", (socket) => {
         logger.info(`Socket connected: ${socket.id}`);
@@ -49,8 +66,8 @@ export const createServer = () => {
         });
     });
 
-    // Initialize the queue event listeners and pass the io & app instances
-    initializeQueueEvents(io, app);
+    // Initialize the queue event listeners and pass the io instance
+    initializeQueueEvents(io);
 
     return httpServer;
 };

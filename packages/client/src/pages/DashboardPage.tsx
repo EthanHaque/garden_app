@@ -24,7 +24,10 @@ export function DashboardPage() {
 
     useEffect(() => {
         if (!user) return;
-        const socket = io("http://localhost:3000");
+
+        // Use Vite's env variables to determine the socket URL
+        const socketURL = import.meta.env.PROD ? "" : import.meta.env.VITE_API_BASE_URL;
+        const socket = io(socketURL);
 
         socket.on("connect", () => {
             socket.emit("join", user._id);

@@ -15,6 +15,12 @@ if (!process.env.JWT_REFRESH_SECRET) exitOnMissing("JWT_REFRESH_SECRET");
 
 const config = {
     /**
+     * The current environment (e.g., 'development', 'production').
+     * Defaults to 'development'.
+     */
+    nodeEnv: process.env.NODE_ENV || "development",
+
+    /**
      * The port the server will run on.
      * Defaults to 3000 if not specified in .env
      */
