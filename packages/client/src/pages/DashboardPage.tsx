@@ -235,7 +235,7 @@ export function DashboardPage() {
                 cell: ({ row }) => {
                     const job = row.original;
                     return (
-                        <div className="w-[80px] text-right">
+                        <div className="w-[80px] h-8 text-right">
                             {job.status === "failed" && (
                                 <Button variant="outline" size="sm" onClick={(e) => handleRetry(e, job._id)}>
                                     Retry
