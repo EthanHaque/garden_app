@@ -25,22 +25,18 @@ const processJob = async (job) => {
         if (contentType.includes("application/pdf")) {
             await job.updateProgress({ stage: "Processing PDF", percentage: 20, attempts: job.attemptsMade });
 
-            const pdfBuffer = await response.buffer();
-            const renderPage = await browser.newPage();
-
-            // Setup page for PDF rendering with pdf.js
-            await renderPage.setContent(`
+            // Re-purpose the page for PDF rendering with pdf.js
+            await page.setContent(`
                 <html><body></body><script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script></html>
             `);
-            await renderPage.evaluate(() => {
+            await page.evaluate(() => {
                 (window as any).pdfjsLib.GlobalWorkerOptions.workerSrc =
                     `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
             });
 
             // Function to be executed in browser context to render PDF pages to images
-            const pageImages = await renderPage.evaluate(async (data) => {
-                const pdfData = new Uint8Array(Object.values(data));
-                const pdf = await (window as any).pdfjsLib.getDocument({ data: pdfData }).promise;
+            const pageImages = await page.evaluate(async (pdfUrl) => {
+                const pdf = await (window as any).pdfjsLib.getDocument(pdfUrl).promise;
                 const pages = [];
                 for (let i = 1; i <= pdf.numPages; i++) {
                     const page = await pdf.getPage(i);
@@ -53,12 +49,10 @@ const processJob = async (job) => {
                     pages.push(canvas.toDataURL("image/jpeg"));
                 }
                 return pages;
-            }, pdfBuffer);
-
-            await renderPage.close();
+            }, job.data.url);
 
             const allPagesData = [];
-            const UPLOAD_DIR = path.resolve(__dirname, "../../../server/public/uploads");
+            const UPLOAD_DIR = path.resolve(__dirname, "../../server/public/uploads");
             const jobUploadDir = path.join(UPLOAD_DIR, job.data.jobId);
             await fs.mkdir(jobUploadDir, { recursive: true });
 
