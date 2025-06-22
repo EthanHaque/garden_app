@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ChevronsUpDown, ArrowUp, ArrowDown, User as UserIcon } from "lucide-react";
+import { ChevronsUpDown, ArrowUp, ArrowDown, User as UserIcon, MoreHorizontal } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -86,6 +86,13 @@ export function DashboardPage() {
             });
         });
 
+        socket.on(`job:delete`, (data: { jobId: string }) => {
+            setJobs((prevJobs) => prevJobs.filter((job) => job._id !== data.jobId));
+            setSelectedJob((prevSelectedJob) =>
+                prevSelectedJob && prevSelectedJob._id === data.jobId ? null : prevSelectedJob,
+            );
+        });
+
         return () => {
             socket.disconnect();
         };
@@ -136,6 +143,22 @@ export function DashboardPage() {
             });
         } catch (error) {
             console.error("Failed to retry job", error);
+        }
+    };
+
+    const handleDelete = async (e: React.MouseEvent<HTMLElement>, jobId: string) => {
+        e.stopPropagation(); // Prevents the row's onClick from firing
+
+        if (!window.confirm("Are you sure you want to delete this job permanently?")) {
+            return;
+        }
+
+        try {
+            await api.fetch(`/api/jobs/${jobId}`, {
+                method: "DELETE",
+            });
+        } catch (error) {
+            console.error("Failed to delete job", error);
         }
     };
 
@@ -279,16 +302,37 @@ export function DashboardPage() {
             },
             {
                 id: "actions",
-                header: () => <div className="text-right w-[80px]">Actions</div>,
                 cell: ({ row }) => {
                     const job = row.original;
                     return (
-                        <div className="w-[80px] h-8 text-right">
-                            {job.status === "failed" && (
-                                <Button variant="outline" size="sm" onClick={(e) => handleRetry(e, job._id)}>
-                                    Retry
-                                </Button>
-                            )}
+                        <div className="text-right">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        className="h-8 w-8 p-0"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <span className="sr-only">Open menu</span>
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {job.status === "failed" && (
+                                        <DropdownMenuItem onClick={(e) => handleRetry(e, job._id)}>
+                                            Retry Job
+                                        </DropdownMenuItem>
+                                    )}
+                                    <DropdownMenuItem
+                                        className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                                        onClick={(e) => handleDelete(e, job._id)}
+                                    >
+                                        Delete Job
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     );
                 },
