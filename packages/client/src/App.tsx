@@ -4,6 +4,7 @@ import { LoginForm } from "@/components/login_form";
 import { SignupForm } from "@/components/signup_form";
 import { HomePage } from "@/pages/HomePage";
 import { LandingPage } from "@/pages/LandingPage";
+import { DashboardPage } from "./pages/DashboardPage";
 
 function App() {
     return (
@@ -15,7 +16,8 @@ function App() {
 
             {/* Protected Routes */}
             <Route element={<ProtectedLayout />}>
-                <Route path="/dashboard" element={<HomePage />} />
+                <Route path="/home" element={<HomePage />} />
+                <Route path="/dashboard" element={<DashboardPage />} />
             </Route>
         </Routes>
     );
