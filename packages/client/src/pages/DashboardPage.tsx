@@ -18,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // --- Data Types ---
 interface IJob {
@@ -129,7 +130,21 @@ export function DashboardPage() {
             {
                 accessorKey: "url",
                 header: "URL",
-                cell: ({ row }) => <div className="font-medium">{row.original.url}</div>,
+                cell: ({ row }) => {
+                    const url = row.original.url;
+                    return (
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div className="max-w-[300px] truncate font-medium">{url}</div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{url}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    );
+                },
             },
             {
                 accessorKey: "status",
@@ -141,24 +156,25 @@ export function DashboardPage() {
                     if (status === "completed") variant = "default";
                     if (status === "failed") variant = "destructive";
                     if (status === "processing") variant = "outline";
-                    return (
-                        <div>
-                            <Badge variant={variant}>{status}</Badge>
-                            {status === "failed" && (
-                                <div className="mt-2">
-                                    <p className="text-xs text-red-500">{job.error}</p>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={(e) => handleRetry(e, job._id)}
-                                        className="mt-2"
-                                    >
-                                        Retry
-                                    </Button>
-                                </div>
-                            )}
-                        </div>
-                    );
+
+                    if (status === "failed") {
+                        return (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Badge variant={variant} className="cursor-help">
+                                            {status}
+                                        </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p className="max-w-sm">{job.error || "An unknown error occurred."}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        );
+                    }
+
+                    return <Badge variant={variant}>{status}</Badge>;
                 },
             },
             {
@@ -187,6 +203,23 @@ export function DashboardPage() {
                 accessorKey: "createdAt",
                 header: "Created At",
                 cell: ({ row }) => new Date(row.original.createdAt).toLocaleString(),
+            },
+            {
+                id: "actions",
+                header: () => <div className="text-right">Actions</div>,
+                cell: ({ row }) => {
+                    const job = row.original;
+                    if (job.status === "failed") {
+                        return (
+                            <div className="flex justify-end">
+                                <Button variant="outline" size="sm" onClick={(e) => handleRetry(e, job._id)}>
+                                    Retry
+                                </Button>
+                            </div>
+                        );
+                    }
+                    return null;
+                },
             },
         ],
         [],
