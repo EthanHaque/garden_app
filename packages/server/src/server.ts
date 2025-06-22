@@ -27,7 +27,7 @@ export const createServer = () => {
 
     connectDB();
 
-    app.use(helmet());
+    app.use(helmet({ crossOriginResourcePolicy: false }));
     app.use(cors());
     app.use(express.json());
     app.use(cookieParser());
