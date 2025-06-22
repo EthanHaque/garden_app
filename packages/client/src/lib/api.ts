@@ -26,14 +26,12 @@ class ApiClient {
     public async fetch(url: string, options: RequestInit = {}): Promise<Response> {
         let token = this.getToken();
 
-        // Set the Authorization header
         const headers = new Headers(options.headers);
         if (token) {
             headers.set("Authorization", `Bearer ${token}`);
         }
         options.headers = headers;
 
-        // Perform the fetch
         let response = await fetch(url, options);
 
         // If the token expired (401), try to refresh it

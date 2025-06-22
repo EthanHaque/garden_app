@@ -1,28 +1,56 @@
-import express, { type Express } from "express";
+import express from "express";
+import { createServer as createHttpServer } from "http";
+import { Server } from "socket.io";
 import cors from "cors";
 import helmet from "helmet";
 import connectDB from "./config/database";
 import { apiRouter } from "./routes/api";
 import cookieParser from "cookie-parser";
 import { loggerMiddleware } from "./config/logger";
+import { initializeQueueEvents } from "./services/queue";
+import logger from "./config/logger";
 
-/**
- * Creates and configures the main Express application.
- * @returns {Express} The configured Express application instance.
- */
-export const createServer = (): Express => {
+export const createServer = () => {
     const app = express();
+    const httpServer = createHttpServer(app);
+
+    const io = new Server(httpServer, {
+        cors: {
+            origin: "http://localhost:5173",
+            methods: ["GET", "POST"],
+        },
+    });
+
+    app.set("io", io);
 
     connectDB();
 
-    // Core Middleware
     app.use(helmet());
-    app.use(cors()); // Enable all CORS requests
-    app.use(express.json()); // Enable parsing of JSON request bodies
+    app.use(cors());
+    app.use(express.json());
     app.use(cookieParser());
     app.use(loggerMiddleware);
 
     app.use("/api", apiRouter);
 
-    return app;
+    io.on("connection", (socket) => {
+        logger.info(`Socket connected: ${socket.id}`);
+
+        // Join a room based on the user ID after authentication.
+        socket.on("join", (userId) => {
+            if (userId) {
+                logger.info(`Socket ${socket.id} joining room for user ${userId}`);
+                socket.join(userId);
+            }
+        });
+
+        socket.on("disconnect", () => {
+            logger.info(`Socket disconnected: ${socket.id}`);
+        });
+    });
+
+    // Initialize the queue event listeners and pass the io & app instances
+    initializeQueueEvents(io, app);
+
+    return httpServer;
 };
