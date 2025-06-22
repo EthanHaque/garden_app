@@ -44,7 +44,7 @@ export const initializeQueueEvents = (io: SocketIOServer) => {
                 update.attempts = data.attempts;
             }
 
-            const job = await Job.findByIdAndUpdate(mongoJobId, update, { new: true }).select("user");
+            const job = await Job.findByIdAndUpdate(mongoJobId, update, { new: true }).select("user progress attempts");
 
             if (job) {
                 io.to(job.user.toString()).emit("job:update", {
