@@ -135,7 +135,7 @@ export function DashboardPage() {
             .catch(() => setIsLoadingDetails(false));
     };
 
-    const handleRetry = async (e: React.MouseEvent<HTMLButtonElement>, jobId: string) => {
+    const handleRetry = async (e: React.MouseEvent<HTMLElement>, jobId: string) => {
         e.stopPropagation();
         try {
             await api.fetch(`/api/jobs/${jobId}/retry`, {
@@ -147,7 +147,7 @@ export function DashboardPage() {
     };
 
     const handleDelete = async (e: React.MouseEvent<HTMLElement>, jobId: string) => {
-        e.stopPropagation(); // Prevents the row's onClick from firing
+        e.stopPropagation();
 
         if (!window.confirm("Are you sure you want to delete this job permanently?")) {
             return;
@@ -384,19 +384,6 @@ export function DashboardPage() {
                     <p className="text-muted-foreground">Monitor and inspect your scraping jobs.</p>
                 </div>
                 <div className="flex items-center gap-4">
-                    <form onSubmit={handleSubmit} className="flex flex-col items-end gap-2">
-                        <div className="flex items-center gap-2">
-                            <Input
-                                value={url}
-                                onChange={(e) => setUrl(e.target.value)}
-                                placeholder="Enter URL to process"
-                                className="w-80"
-                                aria-invalid={!!submitError}
-                            />
-                            <Button type="submit">Start Job</Button>
-                        </div>
-                        {submitError && <p className="text-red-500 text-xs">{submitError}</p>}
-                    </form>
                     <ModeToggle />
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -423,10 +410,24 @@ export function DashboardPage() {
                 <Card className="lg:col-span-2">
                     <CardHeader>
                         <CardTitle>Jobs</CardTitle>
-                        <CardDescription>A list of all submitted jobs.</CardDescription>
+                        <CardDescription>A list of all submitted jobs. Enter a URL to start a new one.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex items-center py-4">
+                        <form onSubmit={handleSubmit} className="flex flex-col items-start gap-2 mb-4">
+                            <div className="flex items-center gap-2 w-full">
+                                <Input
+                                    value={url}
+                                    onChange={(e) => setUrl(e.target.value)}
+                                    placeholder="https://example.com"
+                                    className="flex-grow"
+                                    aria-invalid={!!submitError}
+                                />
+                                <Button type="submit">Start Job</Button>
+                            </div>
+                            {submitError && <p className="text-red-500 text-xs">{submitError}</p>}
+                        </form>
+
+                        <div className="flex items-center py-4 border-t">
                             <Input
                                 placeholder="Filter jobs..."
                                 value={globalFilter ?? ""}
@@ -434,7 +435,7 @@ export function DashboardPage() {
                                 className="max-w-sm"
                             />
                         </div>
-                        <div className="rounded-md border h-[calc(100vh-25rem)] overflow-auto" ref={tableContainerRef}>
+                        <div className="rounded-md border h-[calc(100vh-30rem)] overflow-auto" ref={tableContainerRef}>
                             <Table>
                                 <TableHeader>
                                     {table.getHeaderGroups().map((headerGroup) => (

@@ -43,6 +43,7 @@ export function LandingPage() {
         <div ref={container} className="flex flex-col min-h-screen bg-background">
             <header className="container mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
                 <h1 className="text-xl sm:text-2xl font-bold">
+                    <span className="text-2xl">🌱</span>
                     <Link to="/">Cultivar</Link>
                 </h1>
                 <nav className="flex items-center gap-x-2 sm:gap-x-4">
