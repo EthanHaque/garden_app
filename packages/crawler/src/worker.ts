@@ -17,7 +17,7 @@ import path from "path";
  * @param {number} delay The delay between retries in milliseconds.
  * @returns {Promise<any>} The result of the successful function execution.
  */
-const retry = async (fn, operationName = "operation", retries = 3, delay = 1000) => {
+const retry = async (fn, operationName = "operation", retries = 3, delay = 100) => {
     let lastError;
     for (let i = 0; i < retries; i++) {
         try {
