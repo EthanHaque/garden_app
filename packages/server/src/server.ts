@@ -37,8 +37,12 @@ export const createServer = () => {
         logger.info(`Socket connected: ${socket.id}`);
 
         // Join a room based on the user ID after authentication.
-        // This is more secure and efficient.
-        // For now, we'll just log the connection.
+        socket.on("join", (userId) => {
+            if (userId) {
+                logger.info(`Socket ${socket.id} joining room for user ${userId}`);
+                socket.join(userId);
+            }
+        });
 
         socket.on("disconnect", () => {
             logger.info(`Socket disconnected: ${socket.id}`);
