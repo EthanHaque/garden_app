@@ -22,7 +22,7 @@ xss.post("/embed", async (req, res) => {
     const { text: _text } = result.data;
 
     await new Promise((resolve) => {
-        setTimeout(resolve, Math.random() * 5000 + 2000);
+        setTimeout(resolve, Math.random() * 50 + 20);
     });
 
     if (Math.random() < 0.01) {

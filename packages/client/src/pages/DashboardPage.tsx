@@ -15,7 +15,6 @@ export function DashboardPage() {
     const [selectedJob, setSelectedJob] = useState<IJob | null>(null);
     const [isLoadingDetails, setIsLoadingDetails] = useState(false);
 
-    // --- API Calls & Real-time updates ---
     useEffect(() => {
         api.fetch("/api/jobs")
             .then((res) => res.json())

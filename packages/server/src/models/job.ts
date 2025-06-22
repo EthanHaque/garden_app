@@ -35,7 +35,6 @@ const jobSchema = new Schema<IJob>(
 
 export const Job = model<IJob>("Job", jobSchema);
 
-// Schemas for results
 const htmlResultSchema = new Schema({
     htmlContent: String,
     extractedText: String,
@@ -51,7 +50,7 @@ const pdfResultSchema = new Schema({
     pages: [
         {
             pageNumber: Number,
-            imageUrl: String, // Path to the saved image
+            imageUrl: String,
             ocrText: String,
             chunks: [
                 {

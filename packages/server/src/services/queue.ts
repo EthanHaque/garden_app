@@ -97,14 +97,14 @@ export const initializeQueueEvents = (io: SocketIOServer) => {
 
         try {
             const job = await Job.findByIdAndUpdate(
-                mongoJobId, // Use the correct ID
+                mongoJobId,
                 { status: "failed", error: failedReason, attempts: bullJob?.attemptsMade },
                 { new: true },
             ).select("user");
 
             if (job) {
                 io.to(job.user.toString()).emit("job:update", {
-                    jobId: mongoJobId, // Use the correct ID
+                    jobId: mongoJobId,
                     status: "failed",
                     error: failedReason,
                     attempts: bullJob?.attemptsMade,
