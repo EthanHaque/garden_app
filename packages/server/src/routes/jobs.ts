@@ -19,7 +19,7 @@ jobRouter.post("/", protect, validateJobCreation, async (req, res) => {
             attempts: 3,
             backoff: {
                 type: "exponential",
-                delay: 1000,
+                delay: 2000,
             },
         },
     );
