@@ -43,7 +43,7 @@ export function LandingPage() {
         <div ref={container} className="flex flex-col min-h-screen bg-background">
             <header className="container mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
                 <h1 className="text-xl sm:text-2xl font-bold">
-                    <Link to="/">Application</Link>
+                    <Link to="/">Cultivar</Link>
                 </h1>
                 <nav className="flex items-center gap-x-2 sm:gap-x-4">
                     <Button asChild variant="ghost" className="sm:size-auto">
@@ -59,10 +59,11 @@ export function LandingPage() {
             <main className="flex-grow flex items-center py-12 sm:py-16">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <h2 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight text-foreground mb-4">
-                        One-liner About the Application
+                        Extract Meaning from Web Documents
                     </h2>
                     <p className="max-w-2xl mx-auto text-base sm:text-lg md:text-xl text-muted-foreground mb-8">
-                        Subtext describing the application further than the above text
+                        Cultivar processes and transforms online documents into clean, structured knowledge—perfect for
+                        research, comparison, and analysis.
                     </p>
                     <Button asChild size="lg">
                         <Link to="/signup">Get Started for Free</Link>
