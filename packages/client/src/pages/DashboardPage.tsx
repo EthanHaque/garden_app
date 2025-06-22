@@ -16,13 +16,10 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress"; // Assuming you have a Progress component from shadcn
-import { ScrollArea } from "@/components/ui/scroll-area"; // Assuming you have a ScrollArea component
-
-// You might need to create these components using `npx shadcn-ui@latest add progress scroll-area`
+import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // --- Data Types ---
-// From packages/server/src/models/job.ts
 interface IJob {
     _id: string;
     url: string;
@@ -40,7 +37,7 @@ interface IJob {
     createdAt: string;
 }
 
-export function NewDashboardPage() {
+export function DashboardPage() {
     const { api, user } = useAuth();
     const [url, setUrl] = useState("");
     const [jobs, setJobs] = useState<IJob[]>([]);
@@ -59,12 +56,13 @@ export function NewDashboardPage() {
         if (!user) return;
         const socket = io("http://localhost:3000");
 
-        // The room should be joined based on user ID on the server
-        // For now, the client listens to a user-specific event.
-        socket.on(`job:update:${user._id}`, (data) => {
+        socket.on("connect", () => {
+            socket.emit("join", user._id);
+        });
+
+        socket.on("job:update", (data) => {
             setJobs((prevJobs) => prevJobs.map((job) => (job._id === data.jobId ? { ...job, ...data } : job)));
 
-            // Also update the selected job if it's the one being updated
             if (selectedJob && selectedJob._id === data.jobId) {
                 setSelectedJob((prev) => (prev ? { ...prev, ...data } : null));
             }
