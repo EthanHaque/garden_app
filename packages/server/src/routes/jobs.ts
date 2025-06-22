@@ -12,7 +12,17 @@ jobRouter.post("/", protect, validateJobCreation, async (req, res) => {
     const job = new Job({ url, user: req.user._id });
     await job.save();
 
-    await crawlerQueue.add("process-url", { url, jobId: job._id });
+    await crawlerQueue.add(
+        "process-url",
+        { url, jobId: job._id },
+        {
+            attempts: 3,
+            backoff: {
+                type: "exponential",
+                delay: 1000,
+            },
+        },
+    );
 
     res.status(201).json(job);
 });
@@ -29,4 +39,51 @@ jobRouter.get("/:id", protect, async (req, res) => {
         return res.status(404).json({ message: "Job not found" });
     }
     res.json(job);
+});
+
+jobRouter.post("/:id/retry", protect, async (req, res) => {
+    try {
+        const job = await Job.findOne({ _id: req.params.id, user: req.user._id });
+        if (!job) {
+            return res.status(404).json({ message: "Job not found" });
+        }
+
+        if (job.status !== "failed") {
+            return res.status(400).json({ message: "Only failed jobs can be retried." });
+        }
+
+        job.status = "queued";
+        job.error = undefined;
+        job.progress = { stage: "Re-queued", percentage: 0 };
+        job.attempts = 0;
+        job.manualRetries = (job.manualRetries || 0) + 1;
+        await job.save();
+
+        await crawlerQueue.add(
+            "process-url",
+            { url: job.url, jobId: job._id },
+            {
+                attempts: 3,
+                backoff: {
+                    type: "exponential",
+                    delay: 1000,
+                },
+            },
+        );
+
+        const io = req.app.get("io");
+        io.to(job.user.toString()).emit("job:update", {
+            jobId: job._id,
+            status: "queued",
+            progress: job.progress,
+            error: undefined,
+            attempts: 0,
+            manualRetries: job.manualRetries,
+        });
+
+        res.status(200).json(job);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
 });

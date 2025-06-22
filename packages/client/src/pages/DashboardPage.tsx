@@ -35,6 +35,8 @@ interface IJob {
     };
     error?: string;
     createdAt: string;
+    attempts: number;
+    manualRetries?: number;
 }
 
 export function DashboardPage() {
@@ -110,6 +112,17 @@ export function DashboardPage() {
             .catch(() => setIsLoadingDetails(false));
     };
 
+    const handleRetry = async (e: React.MouseEvent<HTMLButtonElement>, jobId: string) => {
+        e.stopPropagation();
+        try {
+            await api.fetch(`/api/jobs/${jobId}/retry`, {
+                method: "POST",
+            });
+        } catch (error) {
+            console.error("Failed to retry job", error);
+        }
+    };
+
     // --- Table Definition ---
     const columns: ColumnDef<IJob>[] = useMemo(
         () => [
@@ -122,23 +135,50 @@ export function DashboardPage() {
                 accessorKey: "status",
                 header: "Status",
                 cell: ({ row }) => {
-                    const status = row.original.status;
+                    const job = row.original;
+                    const status = job.status;
                     let variant: "default" | "secondary" | "destructive" | "outline" = "secondary";
                     if (status === "completed") variant = "default";
                     if (status === "failed") variant = "destructive";
                     if (status === "processing") variant = "outline";
-                    return <Badge variant={variant}>{status}</Badge>;
+                    return (
+                        <div>
+                            <Badge variant={variant}>{status}</Badge>
+                            {status === "failed" && (
+                                <div className="mt-2">
+                                    <p className="text-xs text-red-500">{job.error}</p>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={(e) => handleRetry(e, job._id)}
+                                        className="mt-2"
+                                    >
+                                        Retry
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    );
                 },
             },
             {
                 accessorKey: "progress",
                 header: "Progress",
                 cell: ({ row }) => {
-                    const progress = row.original.progress;
+                    const job = row.original;
+                    const progress = job.progress;
                     return (
                         <div className="flex items-center gap-2">
                             <Progress value={progress.percentage} className="w-[60%]" />
                             <span className="text-sm text-muted-foreground">{progress.percentage}%</span>
+                            {job.attempts > 0 && (
+                                <span className="text-sm text-muted-foreground">(Auto-Retry {job.attempts})</span>
+                            )}
+                            {job.manualRetries > 0 && (
+                                <span className="text-sm text-muted-foreground">
+                                    (Manual Retry #{job.manualRetries})
+                                </span>
+                            )}
                         </div>
                     );
                 },

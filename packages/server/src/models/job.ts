@@ -11,6 +11,8 @@ export interface IJob extends Document {
     result?: Types.ObjectId;
     error?: string;
     user: Types.ObjectId;
+    attempts: number;
+    manualRetries: number;
 }
 
 const jobSchema = new Schema<IJob>(
@@ -25,6 +27,8 @@ const jobSchema = new Schema<IJob>(
         result: { type: Schema.Types.ObjectId, refPath: "resultType" },
         error: { type: String },
         user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+        attempts: { type: Number, default: 0 },
+        manualRetries: { type: Number, default: 0 },
     },
     { timestamps: true },
 );

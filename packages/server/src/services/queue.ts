@@ -33,12 +33,24 @@ export const initializeQueueEvents = (io: SocketIOServer) => {
         if (!mongoJobId) return;
 
         try {
-            // Use the correct mongoJobId to find the job and its associated user
-            const job = await Job.findById(mongoJobId).select("user");
+            const update: any = {
+                progress: {
+                    stage: data.stage,
+                    percentage: data.percentage,
+                },
+            };
+
+            if (data.attempts !== undefined) {
+                update.attempts = data.attempts;
+            }
+
+            const job = await Job.findByIdAndUpdate(mongoJobId, update, { new: true }).select("user");
+
             if (job) {
                 io.to(job.user.toString()).emit("job:update", {
-                    jobId: mongoJobId, // Send the correct ID to the client
-                    progress: data,
+                    jobId: mongoJobId,
+                    progress: job.progress,
+                    attempts: job.attempts,
                 });
             }
         } catch (error) {
@@ -77,10 +89,12 @@ export const initializeQueueEvents = (io: SocketIOServer) => {
         const mongoJobId = await getMongoJobId(jobId);
         if (!mongoJobId) return;
 
+        const bullJob = await crawlerQueue.getJob(jobId);
+
         try {
             const job = await Job.findByIdAndUpdate(
                 mongoJobId, // Use the correct ID
-                { status: "failed", error: failedReason },
+                { status: "failed", error: failedReason, attempts: bullJob?.attemptsMade },
                 { new: true },
             ).select("user");
 
@@ -89,6 +103,7 @@ export const initializeQueueEvents = (io: SocketIOServer) => {
                     jobId: mongoJobId, // Use the correct ID
                     status: "failed",
                     error: failedReason,
+                    attempts: bullJob?.attemptsMade,
                 });
             }
         } catch (error) {
