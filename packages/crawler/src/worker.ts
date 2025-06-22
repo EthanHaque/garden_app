@@ -84,11 +84,11 @@ async function processPdf(page, job) {
 
     // Re-purpose the page for PDF rendering with pdf.js
     await page.setContent(`
-        <html><body></body><script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.3.31/pdf.min.js"></script></html>
+        <html><body></body><script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.6.347/pdf.min.js"></script></html>
     `);
     await page.evaluate(() => {
         (window as any).pdfjsLib.GlobalWorkerOptions.workerSrc =
-            `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.3.31/pdf.worker.min.js`;
+            `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.6.347/pdf.worker.min.js`;
     });
 
     const pageImages = await page.evaluate(async (pdfUrl) => {
