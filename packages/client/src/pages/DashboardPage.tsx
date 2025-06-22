@@ -380,7 +380,10 @@ export function DashboardPage() {
         <div className="h-screen flex flex-col p-4 sm:p-6 lg:p-8 gap-4 bg-muted/40">
             <header className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold">Crawler Dashboard</h1>
+                    <h1 className="text-2xl font-bold">
+                        <span className="text-2xl">🌱</span>
+                        Cultivar Scraping Dashboard
+                    </h1>
                     <p className="text-muted-foreground">Monitor and inspect your scraping jobs.</p>
                 </div>
                 <div className="flex items-center gap-4">
