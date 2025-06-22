@@ -24,7 +24,7 @@ xss.post("/ocr", express.raw({ type: "image/jpeg", limit: "10mb" }), async (req,
     }
 
     await new Promise((resolve) => {
-        setTimeout(resolve, Math.random() * 3000 + 2000); // 2-5 second delay
+        setTimeout(resolve, Math.random() * 30 + 20); // decreased for develop
     });
 
     if (Math.random() < 0.03) {
