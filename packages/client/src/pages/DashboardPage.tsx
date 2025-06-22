@@ -19,6 +19,17 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ModeToggle } from "@/components/mode_toggle";
+import { User as UserIcon } from "lucide-react";
 
 // --- Data Types ---
 interface IJob {
@@ -41,7 +52,7 @@ interface IJob {
 }
 
 export function DashboardPage() {
-    const { api, user } = useAuth();
+    const { api, user, logout } = useAuth();
     const [url, setUrl] = useState("");
     const [jobs, setJobs] = useState<IJob[]>([]);
     const [selectedJob, setSelectedJob] = useState<IJob | null>(null);
@@ -269,22 +280,43 @@ export function DashboardPage() {
         <div className="h-screen flex flex-col p-4 sm:p-6 lg:p-8 gap-4 bg-muted/40">
             <header className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold">Crawler Dashboard</h1>
+                    <h1 className="text-2xl font-bold">Cultivar</h1>
                     <p className="text-muted-foreground">Monitor and inspect your scraping jobs.</p>
                 </div>
-                <form onSubmit={handleSubmit} className="flex flex-col items-end gap-2">
-                    <div className="flex items-center gap-2">
-                        <Input
-                            value={url}
-                            onChange={(e) => setUrl(e.target.value)}
-                            placeholder="Enter URL to process"
-                            className="w-80"
-                            aria-invalid={!!submitError}
-                        />
-                        <Button type="submit">Start Job</Button>
-                    </div>
-                    {submitError && <p className="text-red-500 text-xs">{submitError}</p>}
-                </form>
+                <div className="flex items-center gap-4">
+                    <form onSubmit={handleSubmit} className="flex flex-col items-end gap-2">
+                        <div className="flex items-center gap-2">
+                            <Input
+                                value={url}
+                                onChange={(e) => setUrl(e.target.value)}
+                                placeholder="Enter URL to process"
+                                className="w-80"
+                                aria-invalid={!!submitError}
+                            />
+                            <Button type="submit">Start Job</Button>
+                        </div>
+                        {submitError && <p className="text-red-500 text-xs">{submitError}</p>}
+                    </form>
+                    <ModeToggle />
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                                <UserIcon className="h-5 w-5" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-56" align="end">
+                            <DropdownMenuLabel className="font-normal">
+                                <div className="flex flex-col space-y-1">
+                                    <p className="text-sm font-medium leading-none">{user?.name}</p>
+                                    <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                                </div>
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={logout}>Log out</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             </header>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-grow">
