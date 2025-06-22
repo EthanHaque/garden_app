@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { protect } from "../middleware/auth";
-import { Job } from "../models/job";
+import { Job, HtmlResult, PdfResult } from "../models/job";
 import { crawlerQueue } from "../../../crawler/src/queue";
 import { validateJobCreation } from "../middleware/validators";
 
