@@ -9,6 +9,8 @@ import cookieParser from "cookie-parser";
 import { loggerMiddleware } from "./config/logger";
 import { initializeQueueEvents } from "./services/queue";
 import logger from "./config/logger";
+import path from "path";
+import { fileURLToPath } from "url";
 
 export const createServer = () => {
     const app = express();
@@ -29,6 +31,11 @@ export const createServer = () => {
     app.use(cors());
     app.use(express.json());
     app.use(cookieParser());
+
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    app.use(express.static(path.join(__dirname, "../public")));
+
     app.use(loggerMiddleware);
 
     app.use("/api", apiRouter);
@@ -49,8 +56,8 @@ export const createServer = () => {
         });
     });
 
-    // Initialize the queue event listeners and pass the io & app instances
-    initializeQueueEvents(io, app);
+    // Initialize the queue event listeners and pass the io instance
+    initializeQueueEvents(io);
 
     return httpServer;
 };
