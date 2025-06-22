@@ -66,15 +66,18 @@ export function DashboardPage() {
 
         socket.on(`job:update`, (data) => {
             setJobs((prevJobs) => prevJobs.map((job) => (job._id === data.jobId ? { ...job, ...data } : job)));
-            if (selectedJob && selectedJob._id === data.jobId) {
-                setSelectedJob((prev) => (prev ? { ...prev, ...data } : null));
-            }
+            setSelectedJob((prevSelectedJob) => {
+                if (prevSelectedJob && prevSelectedJob._id === data.jobId) {
+                    return { ...prevSelectedJob, ...data };
+                }
+                return prevSelectedJob;
+            });
         });
 
         return () => {
             socket.disconnect();
         };
-    }, [user, selectedJob]);
+    }, [user]);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();

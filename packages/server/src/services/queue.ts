@@ -66,14 +66,18 @@ export const initializeQueueEvents = (io: SocketIOServer) => {
 
         try {
             const job = await Job.findByIdAndUpdate(
-                mongoJobId, // Use the correct ID
-                { status: "completed", "progress.percentage": 100 },
+                mongoJobId,
+                {
+                    status: "completed",
+                    "progress.stage": "Completed",
+                    "progress.percentage": 100,
+                },
                 { new: true },
-            ).select("user");
+            ).select("user progress");
 
             if (job) {
                 io.to(job.user.toString()).emit("job:update", {
-                    jobId: mongoJobId, // Use the correct ID
+                    jobId: mongoJobId,
                     status: "completed",
                     progress: job.progress,
                 });
