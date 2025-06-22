@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useAuth } from "@/context/Auth";
 import io from "socket.io-client";
 import {
@@ -6,9 +6,9 @@ import {
     flexRender,
     getCoreRowModel,
     useReactTable,
-    getPaginationRowModel,
     type SortingState,
     getSortedRowModel,
+    getFilteredRowModel,
 } from "@tanstack/react-table";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -19,17 +19,16 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ChevronsUpDown, ArrowUp, ArrowDown, User as UserIcon } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
-    DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ModeToggle } from "@/components/mode_toggle";
-import { User as UserIcon } from "lucide-react";
 
 // --- Data Types ---
 interface IJob {
@@ -59,6 +58,8 @@ export function DashboardPage() {
     const [isLoadingDetails, setIsLoadingDetails] = useState(false);
     const [sorting, setSorting] = useState<SortingState>([]);
     const [submitError, setSubmitError] = useState<string | null>(null);
+    const [globalFilter, setGlobalFilter] = useState("");
+    const tableContainerRef = useRef<HTMLDivElement>(null);
 
     // --- API Calls & Real-time updates ---
     useEffect(() => {
@@ -143,7 +144,18 @@ export function DashboardPage() {
         () => [
             {
                 accessorKey: "url",
-                header: "URL",
+                header: ({ column }) => (
+                    <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+                        URL
+                        {column.getIsSorted() === "asc" ? (
+                            <ArrowUp className="ml-2 h-4 w-4" />
+                        ) : column.getIsSorted() === "desc" ? (
+                            <ArrowDown className="ml-2 h-4 w-4" />
+                        ) : (
+                            <ChevronsUpDown className="ml-2 h-4 w-4" />
+                        )}
+                    </Button>
+                ),
                 cell: ({ row }) => {
                     const url = row.original.url;
                     return (
@@ -170,7 +182,18 @@ export function DashboardPage() {
             },
             {
                 accessorKey: "status",
-                header: "Status",
+                header: ({ column }) => (
+                    <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+                        Status
+                        {column.getIsSorted() === "asc" ? (
+                            <ArrowUp className="ml-2 h-4 w-4" />
+                        ) : column.getIsSorted() === "desc" ? (
+                            <ArrowDown className="ml-2 h-4 w-4" />
+                        ) : (
+                            <ChevronsUpDown className="ml-2 h-4 w-4" />
+                        )}
+                    </Button>
+                ),
                 cell: ({ row }) => {
                     const job = row.original;
                     const status = job.status;
@@ -240,7 +263,18 @@ export function DashboardPage() {
             },
             {
                 accessorKey: "createdAt",
-                header: "Created At",
+                header: ({ column }) => (
+                    <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+                        Created At
+                        {column.getIsSorted() === "asc" ? (
+                            <ArrowUp className="ml-2 h-4 w-4" />
+                        ) : column.getIsSorted() === "desc" ? (
+                            <ArrowDown className="ml-2 h-4 w-4" />
+                        ) : (
+                            <ChevronsUpDown className="ml-2 h-4 w-4" />
+                        )}
+                    </Button>
+                ),
                 cell: ({ row }) => new Date(row.original.createdAt).toLocaleString(),
             },
             {
@@ -267,20 +301,42 @@ export function DashboardPage() {
         data: jobs,
         columns,
         getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
         onSortingChange: setSorting,
         getSortedRowModel: getSortedRowModel(),
+        onGlobalFilterChange: setGlobalFilter,
+        getFilteredRowModel: getFilteredRowModel(),
         state: {
             sorting,
+            globalFilter,
         },
     });
+
+    const [visibleJobsCount, setVisibleJobsCount] = useState(15);
+    const { rows } = table.getRowModel();
+    const visibleRows = useMemo(() => rows.slice(0, visibleJobsCount), [rows, visibleJobsCount]);
+
+    useEffect(() => {
+        const tableContainer = tableContainerRef.current;
+        if (!tableContainer) return;
+
+        const handleScroll = () => {
+            const isAtBottom =
+                tableContainer.scrollHeight - tableContainer.scrollTop <= tableContainer.clientHeight + 1;
+            if (isAtBottom && visibleJobsCount < rows.length) {
+                setVisibleJobsCount((prev) => prev + 15);
+            }
+        };
+
+        tableContainer.addEventListener("scroll", handleScroll);
+        return () => tableContainer.removeEventListener("scroll", handleScroll);
+    }, [tableContainerRef, visibleJobsCount, rows.length]);
 
     // --- Render ---
     return (
         <div className="h-screen flex flex-col p-4 sm:p-6 lg:p-8 gap-4 bg-muted/40">
             <header className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold">Cultivar</h1>
+                    <h1 className="text-2xl font-bold">Crawler Dashboard</h1>
                     <p className="text-muted-foreground">Monitor and inspect your scraping jobs.</p>
                 </div>
                 <div className="flex items-center gap-4">
@@ -312,7 +368,6 @@ export function DashboardPage() {
                                 </div>
                             </DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={logout}>Log out</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -327,25 +382,15 @@ export function DashboardPage() {
                         <CardDescription>A list of all submitted jobs.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex items-center justify-end space-x-2 py-4">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => table.previousPage()}
-                                disabled={!table.getCanPreviousPage()}
-                            >
-                                Previous
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => table.nextPage()}
-                                disabled={!table.getCanNextPage()}
-                            >
-                                Next
-                            </Button>
+                        <div className="flex items-center py-4">
+                            <Input
+                                placeholder="Filter jobs..."
+                                value={globalFilter ?? ""}
+                                onChange={(event) => setGlobalFilter(event.target.value)}
+                                className="max-w-sm"
+                            />
                         </div>
-                        <div className="rounded-md border">
+                        <div className="rounded-md border h-[calc(100vh-25rem)] overflow-auto" ref={tableContainerRef}>
                             <Table>
                                 <TableHeader>
                                     {table.getHeaderGroups().map((headerGroup) => (
@@ -364,8 +409,8 @@ export function DashboardPage() {
                                     ))}
                                 </TableHeader>
                                 <TableBody>
-                                    {table.getRowModel().rows?.length ? (
-                                        table.getRowModel().rows.map((row) => (
+                                    {visibleRows.length ? (
+                                        visibleRows.map((row) => (
                                             <TableRow
                                                 key={row.id}
                                                 data-state={row.getIsSelected() && "selected"}
@@ -382,7 +427,7 @@ export function DashboardPage() {
                                     ) : (
                                         <TableRow>
                                             <TableCell colSpan={columns.length} className="h-24 text-center">
-                                                No jobs yet.
+                                                No jobs found.
                                             </TableCell>
                                         </TableRow>
                                     )}
