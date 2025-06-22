@@ -2,11 +2,10 @@ import { QueueEvents } from "bullmq";
 import { Server as SocketIOServer } from "socket.io";
 import { CRAWLER_QUEUE_NAME, connection } from "../../../crawler/src/queue";
 import { Job } from "../models/job";
-import type { Express } from "express";
+import logger from "../config/logger";
 
-export const initializeQueueEvents = (io: SocketIOServer, app: Express) => {
+export const initializeQueueEvents = (io: SocketIOServer) => {
     const queueEvents = new QueueEvents(CRAWLER_QUEUE_NAME, { connection });
-    const logger = (app as any).log; // Access the logger instance from the app
 
     // Listen for job progress events
     queueEvents.on("progress", async ({ jobId, data }) => {

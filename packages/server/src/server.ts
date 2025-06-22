@@ -7,7 +7,8 @@ import connectDB from "./config/database";
 import { apiRouter } from "./routes/api";
 import cookieParser from "cookie-parser";
 import { loggerMiddleware } from "./config/logger";
-import { initializeQueueEvents } from "./services/queueService"; // <-- Import the new module
+import { initializeQueueEvents } from "./services/queue";
+import logger from "./config/logger";
 
 export const createServer = () => {
     const app = express();
@@ -33,7 +34,6 @@ export const createServer = () => {
     app.use("/api", apiRouter);
 
     io.on("connection", (socket) => {
-        const logger = (app as any).log;
         logger.info(`Socket connected: ${socket.id}`);
 
         // Join a room based on the user ID after authentication.
