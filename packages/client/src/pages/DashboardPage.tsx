@@ -136,7 +136,15 @@ export function DashboardPage() {
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <div className="max-w-[300px] truncate font-medium">{url}</div>
+                                    <a
+                                        href={url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="w-[300px] block truncate font-medium hover:underline"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        {url}
+                                    </a>
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     <p>{url}</p>
@@ -166,7 +174,7 @@ export function DashboardPage() {
                                             {status}
                                         </Badge>
                                     </TooltipTrigger>
-                                    <TooltipContent>
+                                    <TooltipContent variant="destructive">
                                         <p className="max-w-sm">{job.error || "An unknown error occurred."}</p>
                                     </TooltipContent>
                                 </Tooltip>
@@ -183,19 +191,36 @@ export function DashboardPage() {
                 cell: ({ row }) => {
                     const job = row.original;
                     const progress = job.progress;
+                    const totalRetries = (job.attempts || 0) + (job.manualRetries || 0);
+
+                    let indicatorColor = "bg-primary";
+                    if (job.status === "completed") {
+                        indicatorColor = "bg-green-500";
+                    } else if (job.status === "failed") {
+                        indicatorColor = "bg-destructive";
+                    } else if (job.status === "processing") {
+                        indicatorColor = "bg-blue-500";
+                    }
+
                     return (
-                        <div className="flex items-center gap-2">
-                            <Progress value={progress.percentage} className="w-[60%]" />
-                            <span className="text-sm text-muted-foreground">{progress.percentage}%</span>
-                            {job.attempts > 0 && (
-                                <span className="text-sm text-muted-foreground">(Auto-Retry {job.attempts})</span>
-                            )}
-                            {job.manualRetries > 0 && (
-                                <span className="text-sm text-muted-foreground">
-                                    (Manual Retry #{job.manualRetries})
-                                </span>
-                            )}
-                        </div>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-2 cursor-help">
+                                        <Progress
+                                            value={progress.percentage}
+                                            className="w-[60%]"
+                                            indicatorClassName={indicatorColor}
+                                        />
+                                        <span className="text-sm text-muted-foreground">{progress.percentage}%</span>
+                                    </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Stage: {progress.stage}</p>
+                                    {totalRetries > 0 && <p>Retries: {totalRetries}</p>}
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     );
                 },
             },
@@ -206,19 +231,18 @@ export function DashboardPage() {
             },
             {
                 id: "actions",
-                header: () => <div className="text-right">Actions</div>,
+                header: () => <div className="text-right w-[80px]">Actions</div>,
                 cell: ({ row }) => {
                     const job = row.original;
-                    if (job.status === "failed") {
-                        return (
-                            <div className="flex justify-end">
+                    return (
+                        <div className="w-[80px] text-right">
+                            {job.status === "failed" && (
                                 <Button variant="outline" size="sm" onClick={(e) => handleRetry(e, job._id)}>
                                     Retry
                                 </Button>
-                            </div>
-                        );
-                    }
-                    return null;
+                            )}
+                        </div>
+                    );
                 },
             },
         ],
@@ -268,6 +292,24 @@ export function DashboardPage() {
                         <CardDescription>A list of all submitted jobs.</CardDescription>
                     </CardHeader>
                     <CardContent>
+                        <div className="flex items-center justify-end space-x-2 py-4">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => table.previousPage()}
+                                disabled={!table.getCanPreviousPage()}
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => table.nextPage()}
+                                disabled={!table.getCanNextPage()}
+                            >
+                                Next
+                            </Button>
+                        </div>
                         <div className="rounded-md border">
                             <Table>
                                 <TableHeader>
@@ -311,24 +353,6 @@ export function DashboardPage() {
                                     )}
                                 </TableBody>
                             </Table>
-                        </div>
-                        <div className="flex items-center justify-end space-x-2 py-4">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => table.previousPage()}
-                                disabled={!table.getCanPreviousPage()}
-                            >
-                                Previous
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => table.nextPage()}
-                                disabled={!table.getCanNextPage()}
-                            >
-                                Next
-                            </Button>
                         </div>
                     </CardContent>
                 </Card>
