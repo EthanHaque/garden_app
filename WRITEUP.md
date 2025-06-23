@@ -1,6 +1,8 @@
 # Cultivar: Architectural Overview
 
-> This application is a web scraping and processing platform built within a monorepo. The architecture is designed around a decoupled frontend, a backend API server, and an asynchronous processing worker, promoting a clean separation of concerns.
+> This application is a web scraping and processing platform built within a monorepo. The architecture is designed
+> around a decoupled frontend, a backend API server, and an asynchronous processing worker, promoting a clean separation
+> of concerns.
 
 ## Table of Contents
 
@@ -12,6 +14,7 @@
 - Data Management & Polymorphism
 - Code Quality & Cross-Cutting Concerns
 - Key Features & Design Decisions
+- Deploymnet
 
 ---
 
@@ -30,13 +33,21 @@
 
 ### Architectural Philosophy & Key Decisions
 
-> **Runtime Choice (Bun):** Bun was chosen to accelerate the development workflow. Care was taken to avoid Bun-specific APIs, ensuring the application remains compatible with Node.js with minimal configuration changes.
+> **Runtime Choice (Bun):** Bun was chosen to accelerate the development workflow. Care was taken to avoid Bun-specific
+> APIs, ensuring the application remains compatible with Node.js with minimal configuration changes.
 
-> **Asynchronous Processing (BullMQ):** To ensure the API remains responsive and can handle failures, long-running scraping tasks are managed by BullMQ. This provides scalability and fault tolerance through features like automatic retries with exponential backoff.
+> **Asynchronous Processing (BullMQ):** To ensure the API remains responsive and can handle failures, long-running
+> scraping tasks are managed by BullMQ.
 
-> **High-Fidelity Scraping (Puppeteer):** While lightweight agents are faster, Puppeteer was chosen to enable the processing of JavaScript-heavy sites and to support future features like full-page screenshots. The worker architecture is designed with fault tolerance for interactions with external microservices (like OCR and embedding).
+> **High-Fidelity Scraping (Puppeteer):** While lightweight agents are faster, Puppeteer was chosen to position the app
+> for implementing hydration and full-page screenshots processing. The worker architecture is designed with fault
+> tolerance for interactions with external microservices. With more time, I would implement a context-dependent
+> scraping pipeline. I.e. use Puppeteer only on sites that a lightweight agent would fail on, or when features like
+> full-page screenshots are not necessary.
 
-> **Database Choice (MongoDB):** MongoDB was selected for its flexibility. While it offers vector search capabilities, a dedicated vector database (e.g., Qdrant, Milvus) would be considered for a production environment to optimize for cost and scalability.
+> **Database Choice (MongoDB):** MongoDB was selected for its flexibility. While it offers vector search capabilities,
+> I prefer a dedicated vector database (e.g., Qdrant, Milvus) for a production environment to optimize for cost
+> and scalability. With more time, I would migrate.
 
 ---
 
@@ -86,3 +97,8 @@ The frontend is a modern Single-Page Application (SPA) built with **React** and 
 - **Real-Time UI Updates:** A **Socket.IO** connection provides immediate feedback to the user as jobs are processed, creating a dynamic and interactive dashboard.
 - **High-Fidelity Web Scraping:** **Puppeteer** is used to control a headless browser, which enables the processing of JavaScript-heavy websites and complex documents like PDFs.
 - **Flexible Data Modeling:** The use of **polymorphic associations** in Mongoose allows the system to store different types of scraping results in a clean, maintainable, and scalable way.
+
+### Deployment
+
+- **Deploymnet Architecture:** The app is deployed with nginx as a reverse proxy and uses a self-signed ssl cert to
+  enable HTTPS.
