@@ -77,13 +77,14 @@ The application follows a decoupled, event-driven workflow:
 
 ### Frontend Architecture
 
-The frontend is a modern Single-Page Application (SPA) built with **React** and bundled with **Vite**.
+The frontend is a Single-Page Application (SPA) built with **React** and bundled with **Vite**.
 
 - **Client-Side Routing:** React Router manages navigation, using protected layout components to ensure only
   authenticated users can access the app's pageapp's pages.
 - **State Management:** Global state for authentication and theme is managed via **React Context**.
 - **Real-time Updates:** The dashboard establishes a **Socket.IO** connection to the backend to listen for real-time
   job updates, eliminating the need for polling.
+- **Landing Page:** Added a landing page with some light animations for a bit of stylistic flair.
 
 ### Data Management & Polymorphism
 
@@ -92,6 +93,7 @@ The frontend is a modern Single-Page Application (SPA) built with **React** and 
 - **Polymorphic Associations:** The `Job` schema contains a `resultType` field (which can be `HtmlResult` or `PdfResult`)
   dynamically controls which collection the `result` field references. This allows for a clean and flexible way to
   associate a single job with different kinds of result documents. This can be expanded to other types of content.
+- **PDF Data Storage:** PDF images are stored on disk and served to the client and are visible in the UI.
 
 ### Cross-Cutting Concerns
 
