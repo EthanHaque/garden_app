@@ -1,75 +1,88 @@
-# Cultivar
+# Cultivar: Architectural Overview
 
-This repository is structured as a monorepo managed by Bun workspaces, containing a decoupled frontend client,
-microservice api wrappers, a scraping service, and a backend server. This promotes separation of concerns,
-independent development workflows, and shared tooling.
+> This application is a web scraping and processing platform built within a monorepo. The architecture is designed around a decoupled frontend, a backend API server, and an asynchronous processing worker, promoting a clean separation of concerns.
 
-### Table of Contents
+## Table of Contents
 
 - Core Technologies
-- High-Level Architecture
+- Architectural Philosophy & Key Decisions
+- High-Level Workflow
 - Backend Architecture
 - Frontend Architecture
-- Data Management
+- Data Management & Polymorphism
 - Code Quality & Cross-Cutting Concerns
+- Key Features & Design Decisions
 
 ---
 
-### Core Technologies
+## Core Technologies
 
-- **Language:** [TypeScript](https://www.typescriptlang.org/)
-- **Runtime:** [Bun](https://bun.sh/) (dropin replacement for Node.js written in Zig)
-- **Build Tool:** [Vite](https://vite.dev/)
-- **Client Framework:** [React](https://react.dev/) with [Vite](https://vitejs.dev/)
-- **Server Framework:** [Express.js](https://expressjs.com/)
-- **State Management:** [React Hooks](https://react.dev/reference/react/hooks) and (Socket.IO)[https://socket.io/]
-- **Job Queue:** [BullMQ](https://bullmq.io/) with [Redis](https://redis.io/)
-- **Web Scraping:** [Puppeteer](https://pptr.dev/)
-- **Database:** [MongoDB](https://www.mongodb.com/) with [Mongoose](https://mongoosejs.com/)
-- **Styling:** [Tailwind CSS](https://tailwindcss.com/) with [shadcn/ui](https://ui.shadcn.com/),
-  [Radix UI](https://www.radix-ui.com/), and GSAP [GSAP](https://gsap.com/)
-- **Linting:** [ESLint](https://eslint.org/)
-- **Formatting:** [Prettier](https://prettier.io/)
-
-I chose to use Bun instead of Node because I find it speeds up the development workflow. I was careful not to use any
-Bun-specific features in my implementation, so, with a few tweaks to configurations, the application will work fine
-with Node as well. Additionally, I chose BullMQ as a job queue for scalability and fault tolerance. Furthermore, even
-though it has higher overhead, I used Puppeteer for scraping to position the application for implementing hydration
-and full-page screenshots. With more time, I would have dynamically swapped the Puppeteer instance with a lightweight
-agent based on scraping context: page protections, the size of the scraping job, etc. The rest of the technologies
-I chose because they are part of the Garden tech stack, or beacuse they integrated well within the rest of the
-application. MongoDB Atlas does offer vector search capabilities in addition to text search, which does make development
-easier, but I prefer using specialized vector-db's (e.g. Qdrant or Milvus) for storing embeddings in production. With
-more time I would migrate to a cheaper, more scalable solution.
+| Category     | Technology                        | Purpose                                         |
+| :----------- | :-------------------------------- | :---------------------------------------------- |
+| **Runtime**  | Bun                               | A fast, Node.js-compatible JavaScript runtime.  |
+| **Backend**  | Express.js, BullMQ, Puppeteer     | API creation, job queuing, and web scraping.    |
+| **Frontend** | React, Vite, Socket.IO Client     | UI, build tooling, and real-time communication. |
+| **Database** | MongoDB with Mongoose             | Flexible NoSQL data storage and modeling.       |
+| **Styling**  | Tailwind CSS, shadcn/ui, Radix UI | Utility-first CSS and component-based UI.       |
+| **Tooling**  | TypeScript, ESLint, Prettier      | Type safety, linting, and code formatting.      |
 
 ---
 
-### High-Level Architecture
+## Architectural Philosophy & Key Decisions
 
-The application is organized into a monorepo containing multiple, distinct packages (`client`, `server`, `crawler`,
-`ocr`, and `embed`). Users are authenticated and authorized with a two-token system, and submit jobs via the UI.
-Long-running scraping tasks are offloaded to a separate crawling service using a message queue with an in-memory
-database. Jobs are picked up off the queue whenever a worker becomes available. The client establishes a Socket.IO
-connection and listents for job:update events as the job is processed. Once the worker finishes, the document is added
-to MongoDB, links the original Job document to the new result document, and finally triggers a completed event through
-the queue and pushes the event to the client.
+> **Runtime Choice (Bun):** Bun was chosen to accelerate the development workflow. Care was taken to avoid Bun-specific APIs, ensuring the application remains compatible with Node.js with minimal configuration changes.
 
-### Backend Architecture
+> **Asynchronous Processing (BullMQ):** To ensure the API remains responsive and can handle failures, long-running scraping tasks are managed by BullMQ. This provides scalability and fault tolerance through features like automatic retries with exponential backoff.
 
-The server is built with Express and exposes a REST API. The API endpoints are protected via an authorization system
-based on a two-token JSON Web Token scheme. It uses short-lived access tokens for requests that is automatically
-refreshed by the client, and a long-lived refresh token for maintaining the user's session. For real time communication,
-a Socket.IO connection provides a bi-directional communication channel for the client and server, avoiding polling.
+> **High-Fidelity Scraping (Puppeteer):** While lightweight agents are faster, Puppeteer was chosen to enable the processing of JavaScript-heavy sites and to support future features like full-page screenshots. The worker architecture is designed with fault tolerance for interactions with external microservices (like OCR and embedding).
 
-BullMQ manages the queue of scraping jobs. Failed jobs are automatically retried with exponential backoff until a
-certain threshold is met, then the job is failed and the user has the option to retry the job manually. The worker
-threads also provide fault tolence with the ocr and embedding microservices to handle transient failures gracefully.
-[LangChain](https://www.langchain.com/) provides an interface for text processing that I extend for this usecase.
+> **Database Choice (MongoDB):** MongoDB was selected for its flexibility. While it offers vector search capabilities, a dedicated vector database (e.g., Qdrant, Milvus) would be considered for a production environment to optimize for cost and scalability.
 
-### Frontend Architecture
+---
 
-### Data Management
+## High-Level Workflow
 
-### Code Quality & Cross-Cutting Concerns
+The application follows a decoupled, event-driven workflow:
 
-### Key Features & Design Decisions
+1.  **Job Submission:** An authenticated user submits a URL through the React frontend. The client makes a `POST` request to the backend API.
+2.  **Job Queuing:** The Express server validates the request, creates a `Job` entry in MongoDB, and pushes a task to the BullMQ queue.
+3.  **Asynchronous Processing:** A dedicated `crawler` worker, running in a separate process, picks up the job from the queue.
+4.  **Real-time Feedback:** As the worker processes the job, it sends status updates back through the queue. The backend server listens for these events and broadcasts them directly to the client via a **Socket.IO** connection, updating the UI in real-time.
+5.  **Completion:** Once scraping is complete, the worker saves the results to MongoDB, updates the original `Job` document with a link to the results, and emits a final `completed` event.
+
+---
+
+## Backend Architecture
+
+- **API Layer:** The Express server exposes a REST API secured with a two-token JWT scheme (short-lived access tokens and a long-lived refresh token stored in an HTTP-only cookie). This provides secure, stateless authentication.
+- **Processing Layer:** The `crawler` worker uses Puppeteer to launch a headless browser to handle both HTML and PDF documents. It also uses LangChain's text processing utilities to chunk extracted text before embedding and storage.
+
+## Frontend Architecture
+
+The frontend is a modern Single-Page Application (SPA) built with **React** and bundled with **Vite** for a fast development experience.
+
+- **Component-Based UI:** The interface is built with reusable components from the **shadcn/ui** library, which provides accessible and themeable components built on Radix UI.
+- **Client-Side Routing:** **React Router** manages navigation, using a protected layout component to ensure only authenticated users can access the main dashboard.
+- **State Management:** Global state for authentication and theme is managed via **React Context**, providing a clean way to access user data and UI preferences.
+- **Real-time Updates:** The dashboard establishes a **Socket.IO** connection to the backend to listen for real-time job updates, eliminating the need for polling.
+
+## Data Management & Polymorphism
+
+- **Data Modeling:** Data is stored in MongoDB and managed with Mongoose, which defines schemas for `User`, `Job`, and job results.
+- **Polymorphic Associations:** The `Job` schema uses a powerful Mongoose feature to handle different types of results. The `resultType` field (which can be "HtmlResult" or "PdfResult") dynamically controls which collection the `result` field references. This allows for a clean and flexible way to associate a single job with different kinds of result documents.
+
+## Code Quality & Cross-Cutting Concerns
+
+- **Type Safety:** The entire codebase is written in **TypeScript** using a strict configuration to ensure type safety and improve maintainability.
+- **Linting & Formatting:** **ESLint** and **Prettier** are enforced across the monorepo to maintain a consistent code style and prevent common errors.
+- **Security:** Authentication is handled by a JWT-based system, with a `protect` middleware function that secures backend routes. The **Helmet** library is also used to apply secure HTTP headers.
+- **Validation:** Incoming API requests are validated using **Zod**, ensuring data integrity before it reaches the controllers.
+- **Logging:** A structured logger (**Pino**) is used on the backend to provide detailed and filterable logs, including correlation IDs to track requests across services.
+
+## Key Features & Design Decisions
+
+- **Monorepo & Microservices:** The project is organized into distinct packages for the client, server, and background workers. This separates concerns and allows for independent scaling and development.
+- **Asynchronous Job Processing:** Long-running scraping tasks are offloaded to a **BullMQ** queue, ensuring the API remains fast and responsive. The queue also provides robust features like automatic retries with exponential backoff.
+- **Real-Time UI Updates:** A **Socket.IO** connection provides immediate feedback to the user as jobs are processed, creating a dynamic and interactive dashboard.
+- **High-Fidelity Web Scraping:** **Puppeteer** is used to control a headless browser, which enables the processing of JavaScript-heavy websites and complex documents like PDFs.
+- **Flexible Data Modeling:** The use of **polymorphic associations** in Mongoose allows the system to store different types of scraping results in a clean, maintainable, and scalable way.
