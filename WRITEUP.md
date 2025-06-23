@@ -12,8 +12,7 @@
 - Backend Architecture
 - Frontend Architecture
 - Data Management & Polymorphism
-- Code Quality & Cross-Cutting Concerns
-- Key Features & Design Decisions
+- Cross-Cutting Concerns
 - Deploymnet
 
 ---
@@ -55,48 +54,51 @@
 
 The application follows a decoupled, event-driven workflow:
 
-1.  **Job Submission:** An authenticated user submits a URL through the React frontend. The client makes a `POST` request to the backend API.
-2.  **Job Queuing:** The Express server validates the request, creates a `Job` entry in MongoDB, and pushes a task to the BullMQ queue.
-3.  **Asynchronous Processing:** A dedicated `crawler` worker, running in a separate process, picks up the job from the queue.
-4.  **Real-time Feedback:** As the worker processes the job, it sends status updates back through the queue. The backend server listens for these events and broadcasts them directly to the client via a **Socket.IO** connection, updating the UI in real-time.
-5.  **Completion:** Once scraping is complete, the worker saves the results to MongoDB, updates the original `Job` document with a link to the results, and emits a final `completed` event.
+1.  **Job Submission:** An authenticated user submits a URL through the React frontend. The client makes a `POST`
+    request to the backend API.
+2.  **Job Queuing:** The Express server validates the request, creates a `Job` entry in MongoDB, and pushes a task to
+    the BullMQ queue.
+3.  **Asynchronous Processing:** A dedicated `crawler` worker, running in a separate process, picks up the job from the
+    queue.
+4.  **Real-time Feedback:** As the worker processes the job, it sends status updates back through the queue. The
+    backend server listens for these events and broadcasts them directly to the client via a **Socket.IO** connection,
+    updating the UI in real-time.
+5.  **Completion:** Once scraping is complete, the worker saves the results to MongoDB, updates the original `Job`
+    document with a link to the results, and emits a final `completed` event.
 
 ---
 
 ### Backend Architecture
 
-- **API Layer:** The Express server exposes a REST API secured with a two-token JWT scheme (short-lived access tokens and a long-lived refresh token stored in an HTTP-only cookie). This provides secure, stateless authentication.
-- **Processing Layer:** The `crawler` worker uses Puppeteer to launch a headless browser to handle both HTML and PDF documents. It also uses LangChain's text processing utilities to chunk extracted text before embedding and storage.
+- **API Layer:** The Express server exposes a REST API secured with a two-token JWT scheme (short-lived access tokens
+  and a long-lived refresh token stored in an HTTP-only cookie). This provides secure, stateless authentication.
+- **Processing Layer:** The `crawler` worker uses Puppeteer to launch a headless browser to handle both HTML and PDF
+  documents. It also uses LangChain's text processing utilities to chunk extracted text before embedding and storage.
 
 ### Frontend Architecture
 
-The frontend is a modern Single-Page Application (SPA) built with **React** and bundled with **Vite** for a fast development experience.
+The frontend is a modern Single-Page Application (SPA) built with **React** and bundled with **Vite**.
 
-- **Component-Based UI:** The interface is built with reusable components from the **shadcn/ui** library, which provides accessible and themeable components built on Radix UI.
-- **Client-Side Routing:** **React Router** manages navigation, using a protected layout component to ensure only authenticated users can access the main dashboard.
-- **State Management:** Global state for authentication and theme is managed via **React Context**, providing a clean way to access user data and UI preferences.
-- **Real-time Updates:** The dashboard establishes a **Socket.IO** connection to the backend to listen for real-time job updates, eliminating the need for polling.
+- **Client-Side Routing:** React Router manages navigation, using protected layout components to ensure only
+  authenticated users can access the app's pageapp's pages.
+- **State Management:** Global state for authentication and theme is managed via **React Context**.
+- **Real-time Updates:** The dashboard establishes a **Socket.IO** connection to the backend to listen for real-time
+  job updates, eliminating the need for polling.
 
 ### Data Management & Polymorphism
 
-- **Data Modeling:** Data is stored in MongoDB and managed with Mongoose, which defines schemas for `User`, `Job`, and job results.
-- **Polymorphic Associations:** The `Job` schema uses a powerful Mongoose feature to handle different types of results. The `resultType` field (which can be "HtmlResult" or "PdfResult") dynamically controls which collection the `result` field references. This allows for a clean and flexible way to associate a single job with different kinds of result documents.
+- **Data Modeling:** Data is stored in MongoDB and managed with Mongoose, which defines schemas for `User`, `Job`, and
+  job results.
+- **Polymorphic Associations:** The `Job` schema contains a `resultType` field (which can be `HtmlResult` or `PdfResult`)
+  dynamically controls which collection the `result` field references. This allows for a clean and flexible way to
+  associate a single job with different kinds of result documents. This can be expanded to other types of content.
 
-### Code Quality & Cross-Cutting Concerns
+### Cross-Cutting Concerns
 
-- **Type Safety:** The entire codebase is written in **TypeScript** using a strict configuration to ensure type safety and improve maintainability.
-- **Linting & Formatting:** **ESLint** and **Prettier** are enforced across the monorepo to maintain a consistent code style and prevent common errors.
-- **Security:** Authentication is handled by a JWT-based system, with a `protect` middleware function that secures backend routes. The **Helmet** library is also used to apply secure HTTP headers.
-- **Validation:** Incoming API requests are validated using **Zod**, ensuring data integrity before it reaches the controllers.
-- **Logging:** A structured logger (**Pino**) is used on the backend to provide detailed and filterable logs, including correlation IDs to track requests across services.
-
-### Key Features & Design Decisions
-
-- **Monorepo & Microservices:** The project is organized into distinct packages for the client, server, and background workers. This separates concerns and allows for independent scaling and development.
-- **Asynchronous Job Processing:** Long-running scraping tasks are offloaded to a **BullMQ** queue, ensuring the API remains fast and responsive. The queue also provides robust features like automatic retries with exponential backoff.
-- **Real-Time UI Updates:** A **Socket.IO** connection provides immediate feedback to the user as jobs are processed, creating a dynamic and interactive dashboard.
-- **High-Fidelity Web Scraping:** **Puppeteer** is used to control a headless browser, which enables the processing of JavaScript-heavy websites and complex documents like PDFs.
-- **Flexible Data Modeling:** The use of **polymorphic associations** in Mongoose allows the system to store different types of scraping results in a clean, maintainable, and scalable way.
+- **Validation:** Incoming API requests are validated using **Zod**, ensuring data integrity before it reaches the
+  controllers.
+- **Logging:** A structured logger (**Pino**) is used on the backend to provide detailed and filterable logs, including
+  correlation IDs to track requests across services.
 
 ### Deployment
 
