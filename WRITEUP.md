@@ -15,7 +15,7 @@
 
 ---
 
-## Core Technologies
+### Core Technologies
 
 | Category     | Technology                        | Purpose                                         |
 | :----------- | :-------------------------------- | :---------------------------------------------- |
@@ -28,7 +28,7 @@
 
 ---
 
-## Architectural Philosophy & Key Decisions
+### Architectural Philosophy & Key Decisions
 
 > **Runtime Choice (Bun):** Bun was chosen to accelerate the development workflow. Care was taken to avoid Bun-specific APIs, ensuring the application remains compatible with Node.js with minimal configuration changes.
 
@@ -40,7 +40,7 @@
 
 ---
 
-## High-Level Workflow
+### High-Level Workflow
 
 The application follows a decoupled, event-driven workflow:
 
@@ -52,12 +52,12 @@ The application follows a decoupled, event-driven workflow:
 
 ---
 
-## Backend Architecture
+### Backend Architecture
 
 - **API Layer:** The Express server exposes a REST API secured with a two-token JWT scheme (short-lived access tokens and a long-lived refresh token stored in an HTTP-only cookie). This provides secure, stateless authentication.
 - **Processing Layer:** The `crawler` worker uses Puppeteer to launch a headless browser to handle both HTML and PDF documents. It also uses LangChain's text processing utilities to chunk extracted text before embedding and storage.
 
-## Frontend Architecture
+### Frontend Architecture
 
 The frontend is a modern Single-Page Application (SPA) built with **React** and bundled with **Vite** for a fast development experience.
 
@@ -66,12 +66,12 @@ The frontend is a modern Single-Page Application (SPA) built with **React** and 
 - **State Management:** Global state for authentication and theme is managed via **React Context**, providing a clean way to access user data and UI preferences.
 - **Real-time Updates:** The dashboard establishes a **Socket.IO** connection to the backend to listen for real-time job updates, eliminating the need for polling.
 
-## Data Management & Polymorphism
+### Data Management & Polymorphism
 
 - **Data Modeling:** Data is stored in MongoDB and managed with Mongoose, which defines schemas for `User`, `Job`, and job results.
 - **Polymorphic Associations:** The `Job` schema uses a powerful Mongoose feature to handle different types of results. The `resultType` field (which can be "HtmlResult" or "PdfResult") dynamically controls which collection the `result` field references. This allows for a clean and flexible way to associate a single job with different kinds of result documents.
 
-## Code Quality & Cross-Cutting Concerns
+### Code Quality & Cross-Cutting Concerns
 
 - **Type Safety:** The entire codebase is written in **TypeScript** using a strict configuration to ensure type safety and improve maintainability.
 - **Linting & Formatting:** **ESLint** and **Prettier** are enforced across the monorepo to maintain a consistent code style and prevent common errors.
@@ -79,7 +79,7 @@ The frontend is a modern Single-Page Application (SPA) built with **React** and 
 - **Validation:** Incoming API requests are validated using **Zod**, ensuring data integrity before it reaches the controllers.
 - **Logging:** A structured logger (**Pino**) is used on the backend to provide detailed and filterable logs, including correlation IDs to track requests across services.
 
-## Key Features & Design Decisions
+### Key Features & Design Decisions
 
 - **Monorepo & Microservices:** The project is organized into distinct packages for the client, server, and background workers. This separates concerns and allows for independent scaling and development.
 - **Asynchronous Job Processing:** Long-running scraping tasks are offloaded to a **BullMQ** queue, ensuring the API remains fast and responsive. The queue also provides robust features like automatic retries with exponential backoff.
