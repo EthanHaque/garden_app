@@ -39,10 +39,10 @@
 > scraping tasks are managed by BullMQ.
 
 > **High-Fidelity Scraping (Puppeteer):** While lightweight agents are faster, Puppeteer was chosen to position the app
-> for implementing hydration and full-page screenshots processing. The worker architecture is designed with fault
-> tolerance for interactions with external microservices. With more time, I would implement a context-dependent
-> scraping pipeline. I.e. use Puppeteer only on sites that a lightweight agent would fail on, or when features like
-> full-page screenshots are not necessary.
+> for implementing hydration and full-page screenshots. The worker architecture is designed with fault tolerance for
+> interactions with external microservices. With more time, I would implement a context-dependent scraping pipeline.
+> I.e. use Puppeteer only on sites that a lightweight agent would fail on, or when features like full-page screenshots
+> are not necessary.
 
 > **Database Choice (MongoDB):** MongoDB was selected for its flexibility. While it offers vector search capabilities,
 > I prefer a dedicated vector database (e.g., Qdrant, Milvus) for a production environment to optimize for cost
