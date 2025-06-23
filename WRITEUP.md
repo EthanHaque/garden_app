@@ -102,8 +102,8 @@ The frontend is a Single-Page Application (SPA) built with **React** and bundled
   which dynamically controls which collection the `result` field references. This allows for a clean and flexible way to
   associate a single job with different kinds of result documents. This can be expanded to other types of content.
 - **PDF Data Storage:** PDF images are stored on disk and served to the client and are visible in the UI.
-- **Data Cleanup on Deletion:** When a job is deleted via the API, the system also deletes the associated HtmlResult
-  or PdfResult document to prevent orphaned data in the database.
+- **Data Cleanup on Deletion:** When a job is deleted via the API, the system also deletes the associated `HtmlResult`
+  or `PdfResult` document to prevent orphaned data in the database.
 
 ### Cross-Cutting Concerns
 
