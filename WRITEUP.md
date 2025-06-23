@@ -72,6 +72,7 @@ The application follows a decoupled, event-driven workflow:
 
 - **API Layer:** The Express server exposes a REST API secured with a two-token JWT scheme (short-lived access tokens
   and a long-lived refresh token stored in an HTTP-only cookie). This provides secure, stateless authentication.
+  Passwords are hashed and salted before storage.
 - **Processing Layer:** The `crawler` worker uses Puppeteer to launch a headless browser to handle both HTML and PDF
   documents. It also uses LangChain's text processing utilities to chunk extracted text before embedding and storage.
 
@@ -86,6 +87,9 @@ The frontend is a Single-Page Application (SPA) built with **React** and bundled
   job updates, eliminating the need for polling.
 - **Interactive Dashboard:** The jobs table includes a search input for filtering and clickable column headers for
   sorting the data. Users can manually retry failed jobs or delete jobs directly from the UI via a dropdown menu.
+- **Detailed UI Tooltips:** The UI makes use of Tooltip components to improve user experience. For instance, in the
+  jobs table, full URLs and detailed error messages for failed jobs are shown in a tooltip on hover, keeping the main
+  table view clean. As jobs are processing, the user can hover over the progress bar to see updates on its status.
 - **Dark/Light Mode:** The application includes a theme toggler for switching between dark and light modes, with the
   user's preference saved in local storage.
 - **Landing Page:** Added a landing page with some light animations for a bit of stylistic flair.
@@ -98,6 +102,8 @@ The frontend is a Single-Page Application (SPA) built with **React** and bundled
   which dynamically controls which collection the `result` field references. This allows for a clean and flexible way to
   associate a single job with different kinds of result documents. This can be expanded to other types of content.
 - **PDF Data Storage:** PDF images are stored on disk and served to the client and are visible in the UI.
+- **Data Cleanup on Deletion:** When a job is deleted via the API, the system also deletes the associated HtmlResult
+  or PdfResult document to prevent orphaned data in the database.
 
 ### Cross-Cutting Concerns
 
