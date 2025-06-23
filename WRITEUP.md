@@ -84,6 +84,10 @@ The frontend is a Single-Page Application (SPA) built with **React** and bundled
 - **State Management:** Global state for authentication and theme is managed via **React Context**.
 - **Real-time Updates:** The dashboard establishes a **Socket.IO** connection to the backend to listen for real-time
   job updates, eliminating the need for polling.
+- **Interactive Dashboard:** The jobs table includes a search input for filtering and clickable column headers for
+  sorting the data. Users can manually retry failed jobs or delete jobs directly from the UI via a dropdown menu.
+- **Dark/Light Mode:** The application includes a theme toggler for switching between dark and light modes, with the
+  user's preference saved in local storage.
 - **Landing Page:** Added a landing page with some light animations for a bit of stylistic flair.
 
 ### Data Management & Polymorphism
@@ -102,6 +106,10 @@ The frontend is a Single-Page Application (SPA) built with **React** and bundled
 - **Logging:** A structured logger (**Pino**) is used on the backend to provide detailed and filterable logs, including
   correlation IDs to track requests across services. Logs are ready to be collected by a telemetry service, making the
   application more observable.
+- **Fault Tolerance:**
+    - **Automatic Retries:** The crawler worker uses a custom retry helper function to automatically retry failed
+      network calls to the OCR and embedding services, separate from BullMQ's own retry mechanism.
+    - **Manual Retries:** The system tracks manualRetries in the database, a feature initiated by the user from the UI.
 
 ### Deployment
 
