@@ -91,7 +91,7 @@ The frontend is a Single-Page Application (SPA) built with **React** and bundled
 - **Data Modeling:** Data is stored in MongoDB and managed with Mongoose, which defines schemas for `User`, `Job`, and
   job results.
 - **Polymorphic Associations:** The `Job` schema contains a `resultType` field (which can be `HtmlResult` or `PdfResult`)
-  dynamically controls which collection the `result` field references. This allows for a clean and flexible way to
+  which dynamically controls which collection the `result` field references. This allows for a clean and flexible way to
   associate a single job with different kinds of result documents. This can be expanded to other types of content.
 - **PDF Data Storage:** PDF images are stored on disk and served to the client and are visible in the UI.
 
@@ -100,7 +100,8 @@ The frontend is a Single-Page Application (SPA) built with **React** and bundled
 - **Validation:** Incoming API requests are validated using **Zod**, ensuring data integrity before it reaches the
   controllers.
 - **Logging:** A structured logger (**Pino**) is used on the backend to provide detailed and filterable logs, including
-  correlation IDs to track requests across services.
+  correlation IDs to track requests across services. Logs are ready to be collected by a telemetry service, making the
+  application more observable.
 
 ### Deployment
 
